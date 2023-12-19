@@ -1,0 +1,56 @@
+.group-card .avatar-image {
+  transform: translateX(0);
+  transition: transform var(--transition-duration) var(--transition-easing);
+}
+.group-card .avatar-image-hidden__wrapper {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  transform: translateX(100%);
+  transition: transform var(--transition-duration) var(--transition-easing);
+}
+.group-card .avatar-image-hidden__wrapper .action-list,
+.group-card .backdrop-blur {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--transition-duration) var(--transition-easing);
+}
+
+.group-card:hover .avatar-image {
+  transform: translateX(-100%);
+}
+.group-card:hover .avatar-image-hidden__wrapper {
+  transform: translateX(0);
+}
+.group-card:hover .avatar-image-hidden__wrapper .action-list,
+.group-card:hover .backdrop-blur {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: initial;
+}
+
+.group-card.selected-address .avatar-image-hidden__wrapper .action-list {
+  opacity: 0;
+}
+.group-card.selected-address .avatar-image-hidden__wrapper {
+  transform: translateX(-50vw);
+  transition: transform 600ms linear;
+}
+.group-card.selected-address .avatar-image {
+  transform: translateX(-100%);
+}
+.group-card.selected-address .backdrop-blur {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;
+}
+.group-card.selected-address .backdrop-blur::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  content: "SELECTED";
+  font-weight: 700;
+}
+
