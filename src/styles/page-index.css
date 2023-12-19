@@ -1,0 +1,11 @@
+@media (max-width: 767px) {
+  aside {
+    will-change: transform;
+    transform: translateY(calc(100% - 60px));
+    height: calc(var(--viewport-height) / 1.8);
+    transition: transform var(--transition-duration) var(--transition-easing);
+  }
+  aside.is-mobile-open {
+    transform: translateY(0);
+  }
+}

@@ -7,7 +7,10 @@ module.exports = {
     extend: {
       height: {
         vh: 'var(--viewport-height)'
-      }
+      },
+      minHeight: {
+        vh: 'var(--viewport-height)'
+      },
     },
   },
   plugins: [],

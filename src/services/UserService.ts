@@ -10,5 +10,11 @@ export const UserService = {
       return apiClient.get('/users/random_user?size=5')
     }
     return apiClient.get(`/users/random_user?size=${config.size}`)
+  },
+  getRandomUserById(id?: string): Promise<AxiosResponse<TUserResponse>> {
+    if (!id) {
+      return apiClient.get('/users/random_user')
+    }
+    return apiClient.get(`/users/random_user?id=${id}`)
   }
 }

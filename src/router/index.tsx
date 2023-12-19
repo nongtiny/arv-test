@@ -1,8 +1,5 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { IndexPage } from '../pages/index';
-import { lazyLoad } from '../helpers/lazyLoad';
-
-const LazyUserPage = lazyLoad('../pages/user', 'UserPage');
 
 export const router = createBrowserRouter([
   {
@@ -12,20 +9,12 @@ export const router = createBrowserRouter([
   },
   {
     path: 'user/:userId',
-    element: <LazyUserPage />
+    async lazy() {
+      const { UserPage, loadUser } = await import("../pages/user");
+      return {
+        loader: loadUser,
+        Component: UserPage
+      };
+    },
   }
 ]);
-//   <Route
-//     path="/"
-//     element={<MainLayout />}
-//   >
-//     <Route
-//       index
-//       element={<IndexPage />}
-//     />
-//     <Route
-//       path=":userId"
-//       element={<LazyUserPage />}
-//     />
-//   </Route>
-// );

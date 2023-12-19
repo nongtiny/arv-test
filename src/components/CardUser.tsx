@@ -1,14 +1,11 @@
-import { Fragment, useRef, useState } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { CSSTransition  } from 'react-transition-group';
-import { TUserResponse } from '../types/response';
+import { ICardUser } from '../types/cardUser';
 import '../styles/card-user.css';
 
-export const CardUser = ({ user, onSelectAddress }: {
-  user: TUserResponse | null,
-  onSelectAddress?: (userAddress: TUserResponse) => void,
-}) => {
+export const CardUser = ({ user, onSelectAddress }: ICardUser) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const skeletonNodeRef = useRef(null);
   return <div className="relative base-container min-h-[129px] !overflow-hidden">
     {
       user && isImageLoaded && onSelectAddress
@@ -25,14 +22,24 @@ export const CardUser = ({ user, onSelectAddress }: {
             >
               🏠 <span className="group-hover:underline">My Address</span>
             </button>
-            <button className="group p-1 text-[#3155FF]">
+            <Link
+              to={{
+                pathname: `user/${user.id}`,
+              }}
+              className="group p-1 text-[#3155FF]"
+            >
               🤖 <span className="group-hover:underline">Profile</span>
-            </button>
+            </Link>
           </div>
         </div>
         : <></>
     }
-    <div className="absolute top-0 left-0 w-full h-full backdrop-blur z-10" />
+    <div
+      className={
+        "hidden absolute top-0 left-0 w-full h-full backdrop-blur z-10"
+        + " md:block"
+      }
+    />
     <div
       className={
         "relative flex flex-col items-center gap-5 py-4"
@@ -51,13 +58,11 @@ export const CardUser = ({ user, onSelectAddress }: {
               />
               : <>
                 <CSSTransition
-                  nodeRef={skeletonNodeRef}
                   in={!isImageLoaded}
                   timeout={200}
                   classNames="fade"
                 >
                   <div
-                    ref={skeletonNodeRef}
                     className={
                       "skeleton-wrapper !absolute top-0 left-0 w-20 h-20 bg-gray-600 transform-opacity duration-200 ease-in-out"
                       + (isImageLoaded ? " opacity-0" : " opacity-100")
@@ -94,21 +99,38 @@ export const CardUser = ({ user, onSelectAddress }: {
           : <div className="w-full">
             <div className="w-full">
               <span className="text-xs text-gray-600">Username</span>
-              <div
-                className={
-                  "skeleton-wrapper w-full h-5 min-h-5 bg-gray-600 transform-opacity duration-200 ease-in-out"
-                }
-              />
+              <div className="skeleton-wrapper w-full h-5 min-h-5 bg-gray-600 transform-opacity duration-200 ease-in-out" />
             </div>
             <div className="w-full">
               <span className="text-xs text-gray-600">Name</span>
-              <div
-                className={
-                  "skeleton-wrapper w-full h-5 min-h-5 bg-gray-600 transform-opacity duration-200 ease-in-out"
-                }
-              />
+              <div className="skeleton-wrapper w-full h-5 min-h-5 bg-gray-600 transform-opacity duration-200 ease-in-out" />
             </div>
           </div>
+      }
+      {
+        user
+          ? <div
+              className={
+                "flex w-full justify-between mt-5"
+                + " md:hidden"
+              }
+            >
+            <button
+              className="group p-1 text-[#3155FF]"
+              onClick={onSelectAddress ? () => onSelectAddress(user) : undefined}
+            >
+              🏠 <span className="group-hover:underline">My Address</span>
+            </button>
+            <Link
+              to={{
+                pathname: `user/${user.id}`,
+              }}
+              className="group p-1 text-[#3155FF]"
+            >
+              🤖 <span className="group-hover:underline">Profile</span>
+            </Link>
+          </div>
+          : <></>
       }
     </div>
   </div>

@@ -1,0 +1,14 @@
+.user-content-wrapper {
+  display: grid;
+  grid-template-columns: var(--columns-size);
+  column-gap: var(--column-gap);
+  row-gap: var(--row-gap);
+}
+
+@media (min-width: 768px) {
+  .user-content-wrapper {
+    grid-template-columns: var(--columns-size-md);
+    column-gap: var(--column-gap-md);
+    row-gap: var(--row-gap-md);
+  }
+}

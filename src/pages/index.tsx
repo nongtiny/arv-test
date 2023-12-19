@@ -1,36 +1,33 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState, } from "react"
 import { SwitchTransition, CSSTransition  } from 'react-transition-group';
 import Lenis from '@studio-freight/lenis'
-
 import { UserService } from '../services/UserService';
 import { TUserResponse, TUserResponseKey } from '../types/response';
 import { STATUS_OK } from '../services/networkStatus';
 import { CardUser } from '../components/CardUser';
+import '../styles/page-index.css';
 
 const ADD_SIZE = 5;
-const searchKeys = ['last_name', 'first_name', 'username'] as TUserResponseKey[];
+const SEARCH_KEYS = ['last_name', 'first_name', 'username'] as TUserResponseKey[];
 
 export const IndexPage = () => {
   const lenisRef = useRef<Lenis>();
   const [users, setUsers] = useState([] as TUserResponse[]);
   const [isLoadingUserInit, setIsLoadingUserInit] = useState(false);
   const [inputSearch, setInputSearch] = useState('');
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [selectedUserAddress, setSelectedUserAddress] = useState(null as TUserResponse | null);
-  const searchNodeRef = useRef(null);
-  const addressNodeRef = useRef(null);
-
-  const nodeRef = useMemo(() => selectedUserAddress ? addressNodeRef : searchNodeRef ,[selectedUserAddress]);
 
   const loadingItemsOfAddSize = useMemo(() => Array.from({length: ADD_SIZE}, (_, i) => i + 1), []);
-
   const filteredUsers = useMemo(() => {
     if (inputSearch.length === 0) {
       return users;
     }
-    return users.slice().filter((item) => searchKeys.some((key) => item[key].toString().toLowerCase().includes(inputSearch.toLowerCase())))
+    return users.slice().filter((item) => SEARCH_KEYS.some((key) => item[key].toString().toLowerCase().includes(inputSearch.toLowerCase())))
   }, [users, inputSearch]);
 
   useEffect(() => {
+    sessionStorage.setItem('users', '[]')
     fetchUsers();
   }, []);
 
@@ -57,6 +54,21 @@ export const IndexPage = () => {
   }
   function onSelectUserAddress(user: TUserResponse) {
     setSelectedUserAddress(user);
+    setIsMobileOpen(true);
+  }
+  function handleOnMobileTrigger() {
+    if (isMobileOpen) {
+      handleOnMobileClose();
+    } else {
+      setIsMobileOpen(true);
+    }
+  }
+  function handleOnMobileClose() {
+    setIsMobileOpen(false);
+    setSelectedUserAddress(null)
+    if (filteredUsers.length === 0) {
+      setInputSearch('');
+    }
   }
   async function fetchUsers() {
     setIsLoadingUserInit(true)
@@ -68,13 +80,16 @@ export const IndexPage = () => {
         setIsLoadingUserInit(false)
         setTimeout(() => {
           setUsers(response.data);
+          sessionStorage.setItem('users', JSON.stringify(response.data));
         }, 200);
       }
     } catch {
       setIsLoadingUserInit(false)
     }
   }
-  async function fetchMoreUsers() {
+  async function fetchMoreUsers(config?: {
+    isMobile: boolean
+  }) {
     setIsLoadingUserInit(true)
     try {
       let tmpUsersResults = users;
@@ -87,11 +102,19 @@ export const IndexPage = () => {
           ...response.data
         ];
         setUsers(tmpUsersResults);
+        sessionStorage.setItem('users', JSON.stringify(tmpUsersResults));
+        if (config && config.isMobile) {
+          window.scrollTo(0, document.body.scrollHeight);
+          setTimeout(() => {
+            setIsLoadingUserInit(false)
+          }, 200);
+          return;
+        }
         initSmoothScroll();
         lenisRef.current?.scrollTo('bottom');
         setTimeout(() => {
           setIsLoadingUserInit(false)
-        });
+        }, 200);
       }
     } catch {
       setIsLoadingUserInit(false)
@@ -100,16 +123,32 @@ export const IndexPage = () => {
   return <div
     className={
       "grid grid-cols-1"
-      + " md:grid-cols-3"
-      + " lg:grid-cols-2"
+      + " md:grid-cols-2"
     }
   >
     <aside
       className={
-        "fixed"
-        + " md:relative md:flex md:col-span-1 md:border-r-4 md:border-black"
+        "fixed bottom-0 left-0 z-30 bg-white w-full"
+        + (isMobileOpen ? " is-mobile-open" : "")
+        + " md:relative md:bottom-initial md:flex md:col-span-1 md:border-r-4 md:border-black"
       }
     >
+      <div
+        className={
+          "w-full h-[60px] grid grid-cols-2 shadow-[rgba(0,_0,_0,_0.24)_0px_3px_8px]"
+          + " md:hidden"
+        }
+      >
+        <button
+          className="border-r-2"
+          onClick={handleOnMobileTrigger}
+        >
+          { selectedUserAddress ? 'ADDRESS' : 'SEARCH' }
+        </button>
+        <button onClick={() => fetchMoreUsers({ isMobile: true })}>
+          ADD MORE
+        </button>
+      </div>
       <SwitchTransition mode="out-in">
         <CSSTransition
           key={selectedUserAddress ? selectedUserAddress.id : 'INPUTREFKEY'}
@@ -120,8 +159,8 @@ export const IndexPage = () => {
         >
           {
             selectedUserAddress
-              ? <div className="w-full flex flex-col justify-between">
-                <div>
+              ? <div className="w-full h-full flex flex-col justify-between">
+                <div className="mt-5 md:mt-0">
                   <label
                     htmlFor="searchInput"
                     className="w-full block text-center input-header-text font-bold"
@@ -154,7 +193,12 @@ export const IndexPage = () => {
                     </div>
                   </div>
                 </div>
-                <div className="base-container pb-4">
+                <div
+                  className={
+                    "hidden base-container pb-6"
+                    + " md:block"
+                  }
+                >
                   <button
                     className="base-btn"
                     onClick={() => setSelectedUserAddress(null)}
@@ -163,7 +207,7 @@ export const IndexPage = () => {
                   </button>
                 </div>
               </div>
-              : <div className="w-full flex flex-col justify-between">
+              : <div className="w-full h-full flex flex-col justify-between pt-10 pb-20">
                 <div>
                   <label
                     htmlFor="searchInput"
@@ -182,10 +226,15 @@ export const IndexPage = () => {
                     />
                   </div>
                 </div>
-                <div className="base-container pb-4">
+                <div
+                  className={
+                    "hidden base-container"
+                    + " md:block"
+                  }
+                >
                   <button
                     className="base-btn"
-                    onClick={fetchMoreUsers}
+                    onClick={() => fetchMoreUsers()}
                   >
                     ADD MORE ROBOTS
                   </button>
@@ -194,22 +243,43 @@ export const IndexPage = () => {
           }
         </CSSTransition>
       </SwitchTransition>
+      <button
+        className={
+          "absolute z-20 bottom-4 left-1/2 transform -translate-x-1/2 underline"
+          + " md:hidden"
+        }
+        onClick={handleOnMobileClose}
+      >
+        Close
+      </button>
     </aside>
+
     <div
       className={
         "block"
-        + " md:col-span-2"
-        + " lg:col-span-1"
+        + " md:col-span-1"
       }
     >
       <div className="card-list-wrapper w-full">
-        <ul className="card-list h-vh overflow-auto">
+        {
+          inputSearch.length && filteredUsers.length === 0
+            ? <div className="relative base-container p-20 text-center">
+              NO DATA 🥺
+            </div>
+            : <></>
+        }
+        <ul
+          className={
+            "card-list"
+            + " md:h-vh md:overflow-auto"
+          }
+        >
           {
             filteredUsers.map((user, index) =>
               <li
                 key={`${user.id}${index}`}
                 className={
-                  "group-card border-b-4 border-black cursor-pointer"
+                  "group-card cursor-pointer border-b-4 border-black last:border-b-0"
                   + (selectedUserAddress && selectedUserAddress.id === user.id ? ' selected-address' : '')
                 }
               >

@@ -3,20 +3,6 @@
 @tailwind utilities;
 
 
-:root {
-  /* Light mode colors */
-  --c-light-text: hsl(227, 100%, 20%);
-  --c-light-background: #fff;
-  --c-light-focus: hsl(32, 100%, 55%);
-  --c-light-interactive: hsl(327, 100%, 55%);
-
-  /* Dark mode colors */
-  --c-dark-text: #eee;
-  --c-dark-background: #121212;
-  --c-dark-focus: hsl(32, 100%, 55%);
-  --c-dark-interactive: hsl(150, 100%, 38%);
-}
-
 /* Set default theme to light theme */
 :root {
   --viewport-height: calc(var(--vh, 1vh)*100);
@@ -25,21 +11,6 @@
   --transition-easing: cubic-bezier(0.25, 0.74, 0.22, 0.99);
   --transition-delay: 0s;
   --transition-easing-slider: cubic-bezier(0.39, 0.01, 0.04, 1);
-
-  --c-text: var(--c-light-text);
-  --c-background: var(--c-light-background);
-  --c-focus: var(--c-light-focus);
-  --c-interactive: var(--c-light-interactive);
-}
-
-/* Override default theme with dark theme */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --c-text: var(--c-dark-text);
-    --c-background: var(--c-dark-background);
-    --c-focus: var(--c-dark-focus);
-    --c-interactive: var(--c-dark-interactive);
-  }
 }
 
 body {
@@ -109,6 +80,7 @@ body {
   overflow: hidden !important;
 }
 
+/* CSS Transition & Animations */
 @keyframes loading-placeholder {
 	100% { transform: translateX(120%); }
 }
@@ -142,4 +114,23 @@ body {
 .fade-address-input-exit-active {
   opacity: 0;
   transition: opacity 600ms;
+}
+
+.slide-enter {
+  opacity: 0;
+  transform: translateY(100%);
+}
+.slide-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 600ms;
+}
+.slide-exit {
+  transform: translateY(0);
+  opacity: 1;
+}
+.slide-exit-active {
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 600ms;
 }
