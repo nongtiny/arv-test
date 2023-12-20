@@ -1,4 +1,4 @@
-import { CSSProperties, Suspense, useState } from 'react';
+import { CSSProperties, Suspense, useEffect, useState } from 'react';
 import { useLoaderData } from 'react-router';
 import { CSSTransition  } from 'react-transition-group';
 import { Link } from 'react-router-dom';
@@ -54,10 +54,14 @@ export const UserPage = () => {
   const { user } = useLoaderData() as { user: TUserResponse | null };
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
+  useEffect(() => {
+    document.body.scrollTo(0, 0);
+  }, []);
+
   if (!user) {
     return <div>NULL</div>;
   }
-  return <Suspense fallback={'loading'}>
+  return <Suspense fallback={null}>
     <div className="base-container pt-5">
       <Link
         to="/"
