@@ -1,6 +1,8 @@
-import { ChangeEvent, useEffect, useMemo, useRef, useState, } from "react"
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState, } from "react"
 import { SwitchTransition, CSSTransition  } from 'react-transition-group';
 import Lenis from '@studio-freight/lenis'
+import { debounce } from 'lodash';
+import { useDebounce } from '../hooks/useDebounce'
 import { UserService } from '../services/UserService';
 import { TUserResponse, TUserResponseKey } from '../types/response';
 import { STATUS_OK } from '../services/networkStatus';
@@ -12,8 +14,7 @@ const SEARCH_KEYS = ['last_name', 'first_name', 'username'] as TUserResponseKey[
 
 export const IndexPage = () => {
   const lenisRef = useRef<Lenis>();
-  const [users, setUsers] = useState([] as TUserResponse[]);
-  const [isLoadingUserInit, setIsLoadingUserInit] = useState(false);
+  const [users, setUsers] = useState([] as (TUserResponse | null)[]);
   const [inputSearch, setInputSearch] = useState('');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [selectedUserAddress, setSelectedUserAddress] = useState(null as TUserResponse | null);
@@ -23,23 +24,50 @@ export const IndexPage = () => {
     if (inputSearch.length === 0) {
       return users;
     }
-    return users.slice().filter((item) => SEARCH_KEYS.some((key) => item[key].toString().toLowerCase().includes(inputSearch.toLowerCase())))
+    return users.slice().filter((item) => item && SEARCH_KEYS.some((key) => item[key].toString().toLowerCase().includes(inputSearch.toLowerCase())))
   }, [users, inputSearch]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      let tmpUsersLoadings = loadingItemsOfAddSize.map((i) => {
+        return null
+      });
+      setUsers(tmpUsersLoadings);
+      const response = await UserService.getRandomUsers({
+        size: ADD_SIZE
+      })
+      if (response.status === STATUS_OK && response.data) {
+        setTimeout(() => {
+          setUsers(response.data);
+          sessionStorage.setItem('users', JSON.stringify(response.data));
+        }, 200);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }, [loadingItemsOfAddSize]);
 
   useEffect(() => {
     sessionStorage.setItem('users', '[]')
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
-  function initSmoothScroll() {
+  const debouncedAddMoreUsersHandler = debounce(fetchMoreUsers, 300);
+
+  function initSmoothScroll(isMobile?: boolean) {
+
     const el = document.querySelector('.card-list') as HTMLElement;
     if (!el) {
       return;
     }
-    lenisRef.current = new Lenis({
-      wrapper: el,
-      content: el
-    });
+    if (isMobile) {
+      lenisRef.current = new Lenis({});
+    } else {
+      lenisRef.current = new Lenis({
+        wrapper: el,
+        content: el
+      });
+    }
     function raf(time: any) {
       if (lenisRef.current) {
         lenisRef.current.raf(time);
@@ -70,29 +98,20 @@ export const IndexPage = () => {
       setInputSearch('');
     }
   }
-  async function fetchUsers() {
-    setIsLoadingUserInit(true)
-    try {
-      const response = await UserService.getRandomUsers({
-        size: ADD_SIZE
-      })
-      if (response.status === STATUS_OK && response.data) {
-        setIsLoadingUserInit(false)
-        setTimeout(() => {
-          setUsers(response.data);
-          sessionStorage.setItem('users', JSON.stringify(response.data));
-        }, 200);
-      }
-    } catch {
-      setIsLoadingUserInit(false)
-    }
-  }
+
   async function fetchMoreUsers(config?: {
     isMobile: boolean
   }) {
-    setIsLoadingUserInit(true)
     try {
       let tmpUsersResults = users;
+      let tmpUsersLoadings = loadingItemsOfAddSize.map((i) => {
+        return null
+      });
+      setUsers([
+        ...tmpUsersResults,
+        ...tmpUsersLoadings,
+      ]);
+
       const response = await UserService.getRandomUsers({
         size: ADD_SIZE
       })
@@ -103,21 +122,11 @@ export const IndexPage = () => {
         ];
         setUsers(tmpUsersResults);
         sessionStorage.setItem('users', JSON.stringify(tmpUsersResults));
-        if (config && config.isMobile) {
-          window.scrollTo(0, document.body.scrollHeight);
-          setTimeout(() => {
-            setIsLoadingUserInit(false)
-          }, 200);
-          return;
-        }
-        initSmoothScroll();
+        initSmoothScroll(config && config.isMobile);
         lenisRef.current?.scrollTo('bottom');
-        setTimeout(() => {
-          setIsLoadingUserInit(false)
-        }, 200);
       }
-    } catch {
-      setIsLoadingUserInit(false)
+    } catch (err) {
+      console.log(err);
     }
   }
   return <div
@@ -145,7 +154,7 @@ export const IndexPage = () => {
         >
           { selectedUserAddress ? 'ADDRESS' : 'SEARCH' }
         </button>
-        <button onClick={() => fetchMoreUsers({ isMobile: true })}>
+        <button onClick={() => debouncedAddMoreUsersHandler({ isMobile: true })}>
           ADD MORE
         </button>
       </div>
@@ -215,7 +224,7 @@ export const IndexPage = () => {
                   >
                     INPUT
                   </label>
-                  <div className="base-container">
+                  <div className="base-container text-center">
                     <input
                       id="searchInput"
                       value={inputSearch}
@@ -224,6 +233,15 @@ export const IndexPage = () => {
                       className="block w-full px-6 py-4 border-2 border-black text-center focus:outline"
                       onInput={handleOnInputSearch}
                     />
+                    <button
+                      className={
+                        "text-xs underline transform-opacity duration-200 ease-in-out"
+                        + (inputSearch.length > 0 ? ' opacity-100 visible' : ' opacity-0 invisible')
+                      }
+                      onClick={() => setInputSearch('')}
+                    >
+                      Clear
+                    </button>
                   </div>
                 </div>
                 <div
@@ -234,7 +252,7 @@ export const IndexPage = () => {
                 >
                   <button
                     className="base-btn"
-                    onClick={() => fetchMoreUsers()}
+                    onClick={() => debouncedAddMoreUsersHandler()}
                   >
                     ADD MORE ROBOTS
                   </button>
@@ -276,31 +294,26 @@ export const IndexPage = () => {
         >
           {
             filteredUsers.map((user, index) =>
-              <li
-                key={`${user.id}${index}`}
-                className={
-                  "group-card cursor-pointer border-b-4 border-black last:border-b-0"
-                  + (selectedUserAddress && selectedUserAddress.id === user.id ? ' selected-address' : '')
-                }
-              >
-                <CardUser
-                  user={user}
-                  onSelectAddress={onSelectUserAddress}
-                />
-              </li>
-            )
-          }
-          {
-            isLoadingUserInit
-              ? loadingItemsOfAddSize.map((index) =>
-                <li
-                  key={`loadingUserCard${index}`}
-                  className="border-b-4 border-black"
+              user
+                ? <li
+                  key={`${user.id}${index}`}
+                  className={
+                    "group-card cursor-pointer border-b-4 border-black last:border-b-0"
+                    + (selectedUserAddress && selectedUserAddress.id === user.id ? ' selected-address' : '')
+                  }
                 >
-                  <CardUser user={null} />
+                  <CardUser
+                    user={user}
+                    onSelectAddress={onSelectUserAddress}
+                  />
                 </li>
-              )
-              : <></>
+                : <li
+                  key={`nullLoading${index}`}
+                  className="group-card cursor-pointer border-b-4 border-black last:border-b-0"
+                >
+                  <CardUser user={user} />
+                </li>
+            )
           }
         </ul>
       </div>

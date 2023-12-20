@@ -2,7 +2,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
 
 function App() {
-  return <div className="main-bg-gradient">
+  return <div className="main-bg-gradient min-h-vh">
     <div
       className={
         "base-container pt-[6%] pb-20"

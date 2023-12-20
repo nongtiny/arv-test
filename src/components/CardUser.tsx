@@ -57,18 +57,12 @@ export const CardUser = ({ user, onSelectAddress }: ICardUser) => {
                 }
               />
               : <>
-                <CSSTransition
-                  in={!isImageLoaded}
-                  timeout={200}
-                  classNames="fade"
-                >
-                  <div
-                    className={
-                      "skeleton-wrapper !absolute top-0 left-0 w-20 h-20 bg-gray-600 transform-opacity duration-200 ease-in-out"
-                      + (isImageLoaded ? " opacity-0" : " opacity-100")
-                    }
-                  />
-                </CSSTransition>
+                <div
+                  className={
+                    "skeleton-wrapper !absolute top-0 left-0 w-20 h-20 bg-gray-600 transform-opacity duration-200 ease-in-out"
+                    + (isImageLoaded ? " opacity-0" : " opacity-100")
+                  }
+                />
                 <img
                   src={user.avatar}
                   alt={user.username}

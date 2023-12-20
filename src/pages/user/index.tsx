@@ -55,7 +55,7 @@ export const UserPage = () => {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   useEffect(() => {
-    document.body.scrollTo(0, 0);
+    document.documentElement.scrollTo(0, 0);
   }, []);
 
   if (!user) {
@@ -91,7 +91,7 @@ export const UserPage = () => {
           onLoad={() => setIsImageLoaded(true)}
         />
       </div>
-      <div className="base-container mt-10">
+      <div className="base-container py-10">
         <div
           style={{
             ...USER_CONTENT_CUSTOM_STYLES
